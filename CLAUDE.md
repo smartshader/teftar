@@ -28,6 +28,9 @@ pnpm build
 
 # Start production server
 pnpm start
+
+# Install Shadcn UI Components
+pnpm dlx shadcn@latest add button
 ```
 
 ### Backend (api/ Directory)
