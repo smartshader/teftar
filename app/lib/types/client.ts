@@ -12,7 +12,8 @@ export interface Client {
   user_id: string;
   client_type: ClientType;
   company_name: string | null;
-  person_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   email: string | null;
   phone_numbers: PhoneNumber[];
   country: string | null;
@@ -28,7 +29,8 @@ export interface Client {
 export interface CreateClientRequest {
   client_type: ClientType;
   company_name?: string;
-  person_name?: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   phone_numbers?: PhoneNumber[];
   country?: string;

@@ -11,6 +11,7 @@ use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "VARCHAR", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum ClientType {
     Company,
     Person,
@@ -29,7 +30,8 @@ pub struct Client {
     pub user_id: Uuid,
     pub client_type: ClientType,
     pub company_name: Option<String>,
-    pub person_name: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     pub email: Option<String>,
     pub phone_numbers: Value,
     pub country: Option<String>,
@@ -46,7 +48,8 @@ pub struct Client {
 pub struct CreateClientRequest {
     pub client_type: ClientType,
     pub company_name: Option<String>,
-    pub person_name: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     #[validate(email)]
     pub email: Option<String>,
     pub phone_numbers: Option<Vec<PhoneNumber>>,
@@ -62,7 +65,8 @@ pub struct CreateClientRequest {
 pub struct UpdateClientRequest {
     pub client_type: Option<ClientType>,
     pub company_name: Option<String>,
-    pub person_name: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     #[validate(email)]
     pub email: Option<String>,
     pub phone_numbers: Option<Vec<PhoneNumber>>,
@@ -119,18 +123,19 @@ pub async fn create_client(
     let client = sqlx::query_as::<_, Client>(
         r#"
         INSERT INTO clients (
-            user_id, client_type, company_name, person_name, email,
+            user_id, client_type, company_name, first_name, last_name, email,
             phone_numbers, country, address_line1, address_line2,
             city, province, postal_code
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *
         "#,
     )
     .bind(user_id)
     .bind(req.client_type)
     .bind(req.company_name)
-    .bind(req.person_name)
+    .bind(req.first_name)
+    .bind(req.last_name)
     .bind(req.email)
     .bind(phone_numbers_json)
     .bind(req.country)
@@ -240,23 +245,25 @@ pub async fn update_client(
         SET
             client_type = COALESCE($1, client_type),
             company_name = COALESCE($2, company_name),
-            person_name = COALESCE($3, person_name),
-            email = COALESCE($4, email),
-            phone_numbers = $5,
-            country = COALESCE($6, country),
-            address_line1 = COALESCE($7, address_line1),
-            address_line2 = COALESCE($8, address_line2),
-            city = COALESCE($9, city),
-            province = COALESCE($10, province),
-            postal_code = COALESCE($11, postal_code),
+            first_name = COALESCE($3, first_name),
+            last_name = COALESCE($4, last_name),
+            email = COALESCE($5, email),
+            phone_numbers = $6,
+            country = COALESCE($7, country),
+            address_line1 = COALESCE($8, address_line1),
+            address_line2 = COALESCE($9, address_line2),
+            city = COALESCE($10, city),
+            province = COALESCE($11, province),
+            postal_code = COALESCE($12, postal_code),
             updated_at = NOW()
-        WHERE id = $12 AND user_id = $13
+        WHERE id = $13 AND user_id = $14
         RETURNING *
         "#,
     )
     .bind(req.client_type)
     .bind(req.company_name)
-    .bind(req.person_name)
+    .bind(req.first_name)
+    .bind(req.last_name)
     .bind(req.email)
     .bind(phone_numbers_json)
     .bind(req.country)

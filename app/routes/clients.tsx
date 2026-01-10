@@ -6,7 +6,7 @@ import { config } from "~/lib/config";
 import { useAuthStore } from "~/lib/stores/auth";
 import type { Client } from "~/lib/types/client";
 import { DashboardLayout } from "~/components/layouts/dashboard-layout";
-import { ClientFormDialog } from "~/components/clients/client-form-dialog";
+import { AddClientMenu } from "~/components/clients/add-client-menu";
 import { Button } from "~/components/ui/button";
 import {
   Table,
@@ -97,9 +97,10 @@ export default function Clients() {
   };
 
   const getClientName = (client: Client) => {
-    return client.client_type === "company"
-      ? client.company_name
-      : client.person_name;
+    if (client.client_type === "company") {
+      return client.company_name;
+    }
+    return `${client.first_name || ""} ${client.last_name || ""}`.trim();
   };
 
   const getClientPhones = (client: Client) => {
@@ -119,7 +120,7 @@ export default function Clients() {
               Manage your clients and their information
             </p>
           </div>
-          <ClientFormDialog />
+          <AddClientMenu />
         </div>
 
         {isLoading ? (
@@ -131,9 +132,7 @@ export default function Clients() {
             <p className="text-muted-foreground mb-4">
               No clients yet. Add your first client to get started.
             </p>
-            <ClientFormDialog
-              trigger={<Button>Add Your First Client</Button>}
-            />
+            <AddClientMenu />
           </div>
         ) : (
           <div className="border rounded-lg">
