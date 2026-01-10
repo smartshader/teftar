@@ -12,6 +12,20 @@ Teftar is a SaaS application similar to FreshBooks, built as a monorepo with:
 - **Storage**: Supabase Storage for file uploads
 - **Deployment**: Fly.io with separate apps for frontend and backend
 
+## Product Philosophy
+
+**Ship Complete Features Only**
+- Never add placeholder links, buttons, or UI elements for unimplemented features
+- Remove any non-functional navigation items, footer links, or CTAs
+- Only show features that are fully implemented and working
+- Keep the UI clean - if it's visible, it must work
+- Examples:
+  - ❌ Don't add "About", "Blog", "Contact" links until those pages exist
+  - ❌ Don't add "Sign In" button until auth is implemented
+  - ❌ Don't add "Pricing" page until pricing model is defined
+  - ✅ Do show only functional features and working links
+  - ✅ Do progressively enhance the UI as features are completed
+
 ## Development Commands
 
 ### Frontend (Root Directory)
