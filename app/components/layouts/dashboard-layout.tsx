@@ -20,7 +20,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <BrandLogo size="md" linkTo="/dashboard" />
+          <div className="flex items-center gap-8">
+            <BrandLogo size="md" linkTo="/dashboard" />
+            <nav className="flex items-center gap-6">
+              <a
+                href="/clients"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clients
+              </a>
+            </nav>
+          </div>
           <Button variant="outline" onClick={handleSignOut}>
             Sign Out
           </Button>

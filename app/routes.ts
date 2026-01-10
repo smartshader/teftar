@@ -7,5 +7,6 @@ export default [
   route("confirm-email", "routes/confirm-email.tsx"),
   route("auth/callback", "routes/auth-callback.tsx"),
   route("dashboard", "routes/dashboard.tsx"),
+  route("clients", "routes/clients.tsx"),
   route("*", "routes/$.tsx"),
 ] satisfies RouteConfig;
