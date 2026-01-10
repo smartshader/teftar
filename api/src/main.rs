@@ -14,6 +14,8 @@ use tower_http::cors::{Any, CorsLayer};
 async fn main() {
     dotenvy::dotenv().ok();
 
+    let _guard = init_sentry();
+
     tracing_subscriber::fmt()
         .with_target(false)
         .compact()
@@ -46,6 +48,8 @@ async fn main() {
         .route("/auth/signup", post(auth::sign_up))
         .route("/auth/signin", post(auth::sign_in))
         .route("/auth/verify-email", post(auth::verify_email))
+        .layer(sentry_tower::NewSentryLayer::new_from_top())
+        .layer(sentry_tower::SentryHttpLayer::with_transaction())
         .layer(cors);
 
     let port = std::env::var("PORT")
@@ -78,4 +82,26 @@ async fn health_check() -> Json<Value> {
     Json(json!({
         "status": "healthy"
     }))
+}
+
+fn init_sentry() -> sentry::ClientInitGuard {
+    let dsn = env::var("SENTRY_DSN").ok();
+    let environment = env::var("SENTRY_ENVIRONMENT").unwrap_or_else(|_| "development".to_string());
+
+    if dsn.is_none() {
+        tracing::warn!("Sentry DSN not configured. Error tracking disabled.");
+    }
+
+    sentry::init((
+        dsn,
+        sentry::ClientOptions {
+            release: sentry::release_name!(),
+            environment: Some(environment.into()),
+            sample_rate: if cfg!(debug_assertions) { 1.0 } else { 0.1 },
+            traces_sample_rate: if cfg!(debug_assertions) { 1.0 } else { 0.1 },
+            attach_stacktrace: true,
+            send_default_pii: false,
+            ..Default::default()
+        },
+    ))
 }

@@ -20,6 +20,8 @@ jobs:
           flyctl secrets set \
             VITE_API_URL="${{ secrets.API_URL }}" \
             VITE_SITE_URL="${{ secrets.SITE_URL }}" \
+            VITE_SENTRY_DSN="${{ secrets.SENTRY_DSN_FRONTEND }}" \
+            VITE_SENTRY_ENVIRONMENT="production" \
             --stage
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
@@ -58,6 +60,8 @@ jobs:
             SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
             SITE_URL="${{ secrets.SITE_URL }}" \
             ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}" \
+            SENTRY_DSN="${{ secrets.SENTRY_DSN_BACKEND }}" \
+            SENTRY_ENVIRONMENT="production" \
             --stage
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
