@@ -38,6 +38,20 @@ Teftar is a SaaS application similar to FreshBooks, built as a monorepo with:
   - ✅ Do show only functional features and working links
   - ✅ Do progressively enhance the UI as features are completed
 
+**Component Reusability & Clean Architecture**
+- Build reusable components for dashboard and application features
+- Extract common UI patterns into shared components in `app/components/`
+- Prioritize component composition over duplication
+- Keep dashboard code clean and maintainable for rapid UI development
+- Guidelines:
+  - ✅ Create reusable layout components (DashboardLayout, PageHeader, etc.)
+  - ✅ Extract common patterns (DataTable, StatCard, ActionButton, etc.)
+  - ✅ Use composition to build complex UIs from simple components
+  - ✅ Refactor duplicated code into shared components immediately
+  - ❌ Don't copy-paste component code between routes
+  - ❌ Don't inline complex UI patterns repeatedly
+- Before building dashboard features, refactor existing code to establish clean patterns
+
 ## Development Commands
 
 ### Frontend (Root Directory)

@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import type { Route } from "./+types/dashboard";
+import { DashboardLayout } from "~/components/layouts/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
-import { FileText, Construction } from "lucide-react";
+import { Construction } from "lucide-react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -22,30 +22,9 @@ export default function Dashboard() {
     }
   }, [navigate]);
 
-  const handleSignOut = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    navigate("/");
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <a
-            href="/dashboard"
-            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
-          >
-            <FileText className="h-6 w-6" />
-            <span className="text-xl font-semibold">Teftar</span>
-          </a>
-          <Button variant="outline" onClick={handleSignOut}>
-            Sign Out
-          </Button>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[calc(100vh-80px)]">
+    <DashboardLayout>
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -62,7 +41,7 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
