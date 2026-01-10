@@ -53,6 +53,8 @@ flyctl deploy --remote-only --config api/fly.toml --dockerfile api/Dockerfile
 ├── app/              # Frontend routes and components
 ├── api/              # Rust backend
 │   └── src/
+├── supabase/         # Database migrations (at root)
+│   └── migrations/
 ├── public/           # Static assets
 └── .github/
     └── workflows/    # CI/CD
