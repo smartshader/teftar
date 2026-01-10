@@ -2,7 +2,11 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { config } from "~/lib/config";
 import { useAuthStore } from "~/lib/stores/auth";
-import type { CreateClientRequest, ClientType, PhoneNumber } from "~/lib/types/client";
+import type {
+  CreateClientRequest,
+  ClientType,
+  PhoneNumber,
+} from "~/lib/types/client";
 import {
   Dialog,
   DialogContent,
@@ -48,11 +52,16 @@ export function ClientFormDialog({ trigger }: ClientFormDialogProps) {
 
   const createClientMutation = useMutation({
     mutationFn: async (data: CreateClientRequest) => {
+      const token =
+        accessToken ||
+        (typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null);
       const response = await fetch(`${config.apiUrl}/clients`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -100,7 +109,11 @@ export function ClientFormDialog({ trigger }: ClientFormDialogProps) {
     setPhoneNumbers(phoneNumbers.filter((_, i) => i !== index));
   };
 
-  const updatePhoneNumber = (index: number, field: keyof PhoneNumber, value: string) => {
+  const updatePhoneNumber = (
+    index: number,
+    field: keyof PhoneNumber,
+    value: string,
+  ) => {
     const updated = [...phoneNumbers];
     updated[index] = { ...updated[index], [field]: value };
     setPhoneNumbers(updated);
@@ -178,14 +191,21 @@ export function ClientFormDialog({ trigger }: ClientFormDialogProps) {
               id="email"
               type="email"
               value={formData.email || ""}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Phone Numbers</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addPhoneNumber}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addPhoneNumber}
+              >
                 <Plus className="h-4 w-4 mr-1" />
                 Add Phone
               </Button>
@@ -293,7 +313,11 @@ export function ClientFormDialog({ trigger }: ClientFormDialogProps) {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={createClientMutation.isPending}>

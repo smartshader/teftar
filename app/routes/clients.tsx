@@ -28,21 +28,30 @@ export function meta({}: Route.MetaArgs) {
 export default function Clients() {
   const navigate = useNavigate();
   const accessToken = useAuthStore((state) => state.accessToken);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    const token =
+      accessToken ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null);
+    if (!token) {
       navigate("/signin");
     }
-  }, [isAuthenticated, navigate]);
+  }, [accessToken, navigate]);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
+      const token =
+        accessToken ||
+        (typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null);
       const response = await fetch(`${config.apiUrl}/clients`, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -52,15 +61,22 @@ export default function Clients() {
 
       return response.json() as Promise<Client[]>;
     },
-    enabled: !!accessToken,
+    enabled:
+      !!accessToken ||
+      (typeof window !== "undefined" && !!localStorage.getItem("access_token")),
   });
 
   const deleteClientMutation = useMutation({
     mutationFn: async (clientId: string) => {
+      const token =
+        accessToken ||
+        (typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null);
       const response = await fetch(`${config.apiUrl}/clients/${clientId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -149,7 +165,10 @@ export default function Clients() {
                         variant="ghost"
                         size="icon"
                         onClick={() =>
-                          handleDelete(client.id, getClientName(client) || "this client")
+                          handleDelete(
+                            client.id,
+                            getClientName(client) || "this client",
+                          )
                         }
                         disabled={deleteClientMutation.isPending}
                       >
