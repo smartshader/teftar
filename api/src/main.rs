@@ -1,10 +1,17 @@
-use axum::{Json, Router, routing::get};
+mod auth;
+
+use axum::{
+    Json, Router,
+    routing::{get, post},
+};
 use serde_json::{Value, json};
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
+
     tracing_subscriber::fmt()
         .with_target(false)
         .compact()
@@ -13,6 +20,8 @@ async fn main() {
     let app = Router::new()
         .route("/", get(root))
         .route("/health", get(health_check))
+        .route("/auth/signup", post(auth::sign_up))
+        .route("/auth/signin", post(auth::sign_in))
         .layer(CorsLayer::permissive());
 
     let port = std::env::var("PORT")

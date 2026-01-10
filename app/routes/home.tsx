@@ -45,7 +45,14 @@ export default function Home() {
             >
               Features
             </a>
-            <Button size="sm">Get Started</Button>
+            <a href="/signin">
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
+            </a>
+            <a href="/signup">
+              <Button size="sm">Get Started</Button>
+            </a>
           </nav>
         </div>
       </header>
@@ -63,12 +70,16 @@ export default function Home() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-base">
-              Get Started
-            </Button>
-            <Button size="lg" variant="outline" className="text-base">
-              View Demo
-            </Button>
+            <a href="/signup">
+              <Button size="lg" className="text-base">
+                Get Started
+              </Button>
+            </a>
+            <a href="/signin">
+              <Button size="lg" variant="outline" className="text-base">
+                Sign In
+              </Button>
+            </a>
           </div>
           <p className="text-sm text-muted-foreground">
             No credit card required • Get started in minutes
@@ -169,9 +180,11 @@ export default function Home() {
             Join thousands of small businesses managing their finances with
             Teftar.
           </p>
-          <Button size="lg" className="text-base">
-            Get Started Today
-          </Button>
+          <a href="/signup">
+            <Button size="lg" className="text-base">
+              Get Started Today
+            </Button>
+          </a>
         </div>
       </section>
 
