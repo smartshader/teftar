@@ -6,10 +6,14 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import type { Route } from "./+types/root";
 import "./app.css";
 import { BuildInfo } from "./components/build-info";
+import { initSentry } from "./lib/sentry.client";
+import { useAuthStore } from "./lib/stores/auth";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -44,7 +48,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000,
+            refetchOnWindowFocus: false,
+          },
+        },
+      }),
+  );
+
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+
+  useEffect(() => {
+    initSentry();
+    initializeAuth();
+  }, [initializeAuth]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Outlet />
+    </QueryClientProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import type { Route } from "./+types/signup";
 import { config } from "~/lib/config";
+import { useAuthStore } from "~/lib/stores/auth";
 import { AuthLayout } from "~/components/layouts/auth-layout";
 import { AuthCard } from "~/components/ui/auth-card";
 import { Button } from "~/components/ui/button";
@@ -17,6 +18,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -60,13 +62,9 @@ export default function SignUp() {
 
       const data = await response.json();
 
-      // Store tokens in localStorage
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      setAuth(data.access_token, data.refresh_token, data.user);
 
-      // Redirect to dashboard (will create later)
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

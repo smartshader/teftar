@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 import { BrandLogo } from "~/components/brand-logo";
 import { Button } from "~/components/ui/button";
+import { useAuthStore } from "~/lib/stores/auth";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -8,11 +9,10 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
+  const clearAuth = useAuthStore((state) => state.clearAuth);
 
   const handleSignOut = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
+    clearAuth();
     navigate("/");
   };
 

@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
+import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { useAuthStore } from "~/lib/stores/auth";
 import {
   FileText,
   Receipt,
@@ -29,6 +31,13 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  const getInitials = (email: string) => {
+    return email.substring(0, 2).toUpperCase();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -45,14 +54,27 @@ export default function Home() {
             >
               Features
             </a>
-            <a href="/signin">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </a>
-            <a href="/signup">
-              <Button size="sm">Get Started</Button>
-            </a>
+            {isAuthenticated && user ? (
+              <a href="/dashboard" className="flex items-center space-x-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="text-xs">
+                    {getInitials(user.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium">{user.email}</span>
+              </a>
+            ) : (
+              <>
+                <a href="/signin">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </a>
+                <a href="/signup">
+                  <Button size="sm">Get Started</Button>
+                </a>
+              </>
+            )}
           </nav>
         </div>
       </header>
