@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import type { Route } from "./+types/signup";
+import { config } from "~/lib/config";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -33,7 +34,7 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/auth/signup", {
+      const response = await fetch(`${config.apiUrl}/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Code Generation Guidelines
+
+**Documentation Policy**
+- **Only generate documentation, README files, or markdown files when explicitly requested**
+- Do not proactively create docs, API documentation, or auxiliary markdown files
+- Focus on code implementation unless specifically asked to document
+- Examples:
+  - ❌ Don't create README.md, API.md, ARCHITECTURE.md unless asked
+  - ❌ Don't add JSDoc/rustdoc comments unless requested
+  - ✅ Do implement features and functionality directly
+  - ✅ Do add inline comments only when logic is non-obvious
+
 ## Project Overview
 
 Teftar is a SaaS application similar to FreshBooks, built as a monorepo with:

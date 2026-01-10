@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import type { Route } from "./+types/auth-callback";
+import { config } from "~/lib/config";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { FileText, CheckCircle2, XCircle } from "lucide-react";
@@ -58,20 +59,17 @@ export default function AuthCallback() {
 
       // Verify the OTP token with backend
       try {
-        const response = await fetch(
-          "http://localhost:8080/auth/verify-email",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              token: token,
-              type_: type,
-              email: email || undefined,
-            }),
+        const response = await fetch(`${config.apiUrl}/auth/verify-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({
+            token: token,
+            type_: type,
+            email: email || undefined,
+          }),
+        });
 
         if (!response.ok) {
           const data = await response.json();
