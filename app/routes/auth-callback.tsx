@@ -20,37 +20,85 @@ export default function AuthCallback() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Extract tokens from URL hash
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
+    const verifyEmail = async () => {
+      // Extract parameters from URL - check both query params and hash
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-    const errorParam = params.get("error");
-    const errorDescription = params.get("error_description");
+      // Try query params first (standard for token_hash), then hash (for access_token)
+      const tokenHash =
+        searchParams.get("token_hash") || hashParams.get("token_hash");
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const type = searchParams.get("type") || hashParams.get("type");
+      const email = searchParams.get("email") || hashParams.get("email");
+      const errorParam = searchParams.get("error") || hashParams.get("error");
+      const errorDescription =
+        searchParams.get("error_description") ||
+        hashParams.get("error_description");
 
-    if (errorParam) {
-      setStatus("error");
-      setError(errorDescription || errorParam);
-      return;
-    }
+      console.log("URL search:", window.location.search);
+      console.log("URL hash:", window.location.hash);
+      console.log("Extracted:", { tokenHash, accessToken, type, email });
 
-    if (accessToken && refreshToken) {
-      // Store tokens
-      localStorage.setItem("access_token", accessToken);
-      localStorage.setItem("refresh_token", refreshToken);
+      if (errorParam) {
+        setStatus("error");
+        setError(errorDescription || errorParam);
+        return;
+      }
 
-      // We need to get user info - for now just extract from token or set basic info
-      // In a real app, you'd decode the JWT or fetch user info
-      setStatus("success");
-    } else {
-      setStatus("error");
-      setError("No authentication tokens found");
-    }
+      // Determine which token we have
+      const token = tokenHash || accessToken;
+
+      if (!token || !type) {
+        setStatus("error");
+        setError("Invalid confirmation link. Missing parameters.");
+        return;
+      }
+
+      // Verify the OTP token with backend
+      try {
+        const response = await fetch(
+          "http://localhost:8080/auth/verify-email",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              token: token,
+              type_: type,
+              email: email || undefined,
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Email verification failed");
+        }
+
+        const data = await response.json();
+
+        // Store tokens and user info
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        setStatus("success");
+      } catch (err) {
+        setStatus("error");
+        setError(
+          err instanceof Error ? err.message : "Email verification failed",
+        );
+      }
+    };
+
+    verifyEmail();
   }, []);
 
   const handleContinue = () => {
-    navigate("/");
+    navigate("/dashboard");
   };
 
   if (status === "loading") {
@@ -69,10 +117,13 @@ export default function AuthCallback() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8">
           <div className="flex flex-col items-center space-y-2">
-            <div className="flex items-center space-x-2">
+            <a
+              href="/"
+              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+            >
               <FileText className="h-8 w-8" />
               <span className="text-2xl font-semibold">Teftar</span>
-            </div>
+            </a>
           </div>
 
           <Card>
@@ -102,10 +153,13 @@ export default function AuthCallback() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center space-y-2">
-          <div className="flex items-center space-x-2">
+          <a
+            href="/"
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
             <FileText className="h-8 w-8" />
             <span className="text-2xl font-semibold">Teftar</span>
-          </div>
+          </a>
         </div>
 
         <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-900">

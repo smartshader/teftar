@@ -83,10 +83,13 @@ export default function SignUp() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center space-y-2">
-          <div className="flex items-center space-x-2">
+          <a
+            href="/"
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
             <FileText className="h-8 w-8" />
             <span className="text-2xl font-semibold">Teftar</span>
-          </div>
+          </a>
           <p className="text-muted-foreground text-center">
             Create your account to get started
           </p>

@@ -23,10 +23,13 @@ export default function ConfirmEmail() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center space-y-2">
-          <div className="flex items-center space-x-2">
+          <a
+            href="/"
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
             <FileText className="h-8 w-8" />
             <span className="text-2xl font-semibold">Teftar</span>
-          </div>
+          </a>
         </div>
 
         <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-900">

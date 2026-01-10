@@ -4,7 +4,9 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use serde::{Deserialize, Serialize};
-use std::env;
+
+use crate::supabase::auth::AuthError as SupabaseAuthError;
+use crate::supabase::{AuthResponse, SupabaseClient};
 
 #[derive(Debug, Deserialize)]
 pub struct SignUpRequest {
@@ -18,17 +20,11 @@ pub struct SignInRequest {
     pub password: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct AuthResponse {
-    pub access_token: String,
-    pub refresh_token: String,
-    pub user: User,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct User {
-    pub id: String,
-    pub email: String,
+#[derive(Debug, Deserialize)]
+pub struct VerifyEmailRequest {
+    pub token: String,
+    pub type_: String,
+    pub email: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -56,165 +52,48 @@ impl IntoResponse for AuthError {
     }
 }
 
+impl From<SupabaseAuthError> for AuthError {
+    fn from(err: SupabaseAuthError) -> Self {
+        match err {
+            SupabaseAuthError::EmailNotConfirmed => AuthError::Unauthorized(err.to_string()),
+            SupabaseAuthError::InvalidCredentials => AuthError::Unauthorized(err.to_string()),
+            SupabaseAuthError::InvalidToken => AuthError::Unauthorized(err.to_string()),
+            SupabaseAuthError::ExpiredToken => AuthError::Unauthorized(err.to_string()),
+            SupabaseAuthError::MissingData(msg) => AuthError::InternalError(msg),
+            SupabaseAuthError::NetworkError(msg) => AuthError::InternalError(msg),
+            SupabaseAuthError::UnknownError(msg) => AuthError::BadRequest(msg),
+        }
+    }
+}
+
 pub async fn sign_up(Json(payload): Json<SignUpRequest>) -> Result<Json<AuthResponse>, AuthError> {
-    let supabase_url = env::var("SUPABASE_URL")
-        .map_err(|_| AuthError::InternalError("Missing SUPABASE_URL".to_string()))?;
-    let supabase_anon_key = env::var("SUPABASE_ANON_KEY")
-        .map_err(|_| AuthError::InternalError("Missing SUPABASE_ANON_KEY".to_string()))?;
+    let client = SupabaseClient::new().map_err(|e| AuthError::InternalError(e))?;
 
-    let site_url = env::var("SITE_URL").unwrap_or_else(|_| "http://localhost:5173".to_string());
-
-    let client = reqwest::Client::new();
-
-    let mut body = serde_json::json!({
-        "email": payload.email,
-        "password": payload.password,
-    });
-
-    // Add redirect URL if needed
-    if let Some(obj) = body.as_object_mut() {
-        obj.insert(
-            "options".to_string(),
-            serde_json::json!({
-                "email_redirect_to": format!("{}/auth/callback", site_url)
-            }),
-        );
+    match client.sign_up(&payload.email, &payload.password).await? {
+        Some(auth_response) => Ok(Json(auth_response)),
+        None => Err(AuthError::ConfirmationRequired(
+            "Account created! Please check your email to confirm your account before signing in."
+                .to_string(),
+        )),
     }
-
-    tracing::info!("POST /auth/signup - email: {}", payload.email);
-
-    let response = client
-        .post(format!("{}/auth/v1/signup", supabase_url))
-        .header("apikey", &supabase_anon_key)
-        .header("Content-Type", "application/json")
-        .json(&body)
-        .send()
-        .await
-        .map_err(|e| AuthError::InternalError(format!("Request failed: {}", e)))?;
-
-    let status = response.status();
-
-    let auth_response: serde_json::Value = response
-        .json()
-        .await
-        .map_err(|e| AuthError::InternalError(format!("Failed to parse response: {}", e)))?;
-
-    if !status.is_success() {
-        tracing::error!("Signup failed for {}: {:?}", payload.email, auth_response);
-        let error_msg = auth_response["msg"]
-            .as_str()
-            .or(auth_response["error_description"].as_str())
-            .or(auth_response["message"].as_str())
-            .unwrap_or("Sign up failed");
-        return Err(AuthError::BadRequest(error_msg.to_string()));
-    }
-
-    // Check if tokens are present (auto-confirm enabled)
-    if let Some(access_token) = auth_response["access_token"].as_str() {
-        let refresh_token = auth_response["refresh_token"]
-            .as_str()
-            .ok_or_else(|| AuthError::InternalError("Missing refresh_token".to_string()))?
-            .to_string();
-
-        let user_id = auth_response["user"]["id"]
-            .as_str()
-            .ok_or_else(|| AuthError::InternalError("Missing user id".to_string()))?
-            .to_string();
-
-        let user_email = auth_response["user"]["email"]
-            .as_str()
-            .ok_or_else(|| AuthError::InternalError("Missing user email".to_string()))?
-            .to_string();
-
-        return Ok(Json(AuthResponse {
-            access_token: access_token.to_string(),
-            refresh_token,
-            user: User {
-                id: user_id,
-                email: user_email,
-            },
-        }));
-    }
-
-    // If no tokens, email confirmation is required
-    // Return 202 Accepted with confirmation message
-    Err(AuthError::ConfirmationRequired(
-        "Account created! Please check your email to confirm your account before signing in."
-            .to_string(),
-    ))
 }
 
 pub async fn sign_in(Json(payload): Json<SignInRequest>) -> Result<Json<AuthResponse>, AuthError> {
-    let supabase_url = env::var("SUPABASE_URL")
-        .map_err(|_| AuthError::InternalError("Missing SUPABASE_URL".to_string()))?;
-    let supabase_anon_key = env::var("SUPABASE_ANON_KEY")
-        .map_err(|_| AuthError::InternalError("Missing SUPABASE_ANON_KEY".to_string()))?;
+    let client = SupabaseClient::new().map_err(|e| AuthError::InternalError(e))?;
 
-    let client = reqwest::Client::new();
-    let response = client
-        .post(format!(
-            "{}/auth/v1/token?grant_type=password",
-            supabase_url
-        ))
-        .header("apikey", &supabase_anon_key)
-        .header("Content-Type", "application/json")
-        .json(&serde_json::json!({
-            "email": payload.email,
-            "password": payload.password,
-        }))
-        .send()
-        .await
-        .map_err(|e| AuthError::InternalError(format!("Request failed: {}", e)))?;
+    let auth_response = client.sign_in(&payload.email, &payload.password).await?;
 
-    let status = response.status();
+    Ok(Json(auth_response))
+}
 
-    if !status.is_success() {
-        // Try to parse error response, but provide user-friendly message
-        let error_response: serde_json::Value = response.json().await.unwrap_or_default();
+pub async fn verify_email(
+    Json(payload): Json<VerifyEmailRequest>,
+) -> Result<Json<AuthResponse>, AuthError> {
+    let client = SupabaseClient::new().map_err(|e| AuthError::InternalError(e))?;
 
-        tracing::error!("Supabase signin error: {:?}", error_response);
+    let auth_response = client
+        .verify_otp(&payload.token, &payload.type_, payload.email.as_deref())
+        .await?;
 
-        // Return user-friendly error message
-        let error_msg = if status.as_u16() == 400 || status.as_u16() == 401 {
-            "Invalid email or password. Please try again."
-        } else {
-            "Unable to sign in. Please try again later."
-        };
-
-        return Err(AuthError::Unauthorized(error_msg.to_string()));
-    }
-
-    let auth_response: serde_json::Value = response
-        .json()
-        .await
-        .map_err(|e| AuthError::InternalError(format!("Failed to parse response: {}", e)))?;
-
-    let access_token = auth_response["access_token"]
-        .as_str()
-        .ok_or_else(|| AuthError::InternalError("Missing access_token".to_string()))?
-        .to_string();
-
-    let refresh_token = auth_response["refresh_token"]
-        .as_str()
-        .ok_or_else(|| AuthError::InternalError("Missing refresh_token".to_string()))?
-        .to_string();
-
-    let user_id = auth_response["user"]["id"]
-        .as_str()
-        .ok_or_else(|| AuthError::InternalError("Missing user id".to_string()))?
-        .to_string();
-
-    let user_email = auth_response["user"]["email"]
-        .as_str()
-        .ok_or_else(|| AuthError::InternalError("Missing user email".to_string()))?
-        .to_string();
-
-    Ok(Json(AuthResponse {
-        access_token,
-        refresh_token,
-        user: User {
-            id: user_id,
-            email: user_email,
-        },
-    }))
+    Ok(Json(auth_response))
 }

@@ -1,4 +1,5 @@
 mod auth;
+mod supabase;
 
 use axum::{
     Json, Router,
@@ -22,6 +23,7 @@ async fn main() {
         .route("/health", get(health_check))
         .route("/auth/signup", post(auth::sign_up))
         .route("/auth/signin", post(auth::sign_in))
+        .route("/auth/verify-email", post(auth::verify_email))
         .layer(CorsLayer::permissive());
 
     let port = std::env::var("PORT")

@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import type { Route } from "./+types/signin";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { FileText } from "lucide-react";
@@ -47,8 +53,8 @@ export default function SignIn() {
       localStorage.setItem("refresh_token", data.refresh_token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // Redirect to dashboard (will create later)
-      navigate("/");
+      // Redirect to dashboard
+      navigate("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -60,10 +66,13 @@ export default function SignIn() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center space-y-2">
-          <div className="flex items-center space-x-2">
+          <a
+            href="/"
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
             <FileText className="h-8 w-8" />
             <span className="text-2xl font-semibold">Teftar</span>
-          </div>
+          </a>
           <p className="text-muted-foreground text-center">
             Sign in to your account
           </p>
@@ -102,11 +111,7 @@ export default function SignIn() {
                   autoComplete="current-password"
                 />
               </div>
-              {error && (
-                <div className="text-sm text-destructive">
-                  {error}
-                </div>
-              )}
+              {error && <div className="text-sm text-destructive">{error}</div>}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
