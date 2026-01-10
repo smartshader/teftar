@@ -4,7 +4,7 @@ use axum::{
     middleware::Next,
     response::{Json, Response},
 };
-use jsonwebtoken::{DecodingKey, Validation, decode};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::PgPool;
@@ -41,20 +41,39 @@ pub async fn auth_middleware(
         )
     })?;
 
-    let jwt_secret = env::var("SUPABASE_JWT_SECRET").map_err(|_| {
-        tracing::error!("SUPABASE_JWT_SECRET not set");
+    let jwk_json = env::var("SUPABASE_JWT_JWK").map_err(|_| {
+        tracing::error!("SUPABASE_JWT_JWK not set");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({ "error": "Server configuration error" })),
         )
     })?;
 
-    let token_data = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(jwt_secret.as_bytes()),
-        &Validation::default(),
+    // Supabase uses ES256 algorithm with JWK format
+    let mut validation = Validation::new(Algorithm::ES256);
+    validation.set_audience(&["authenticated"]);
+
+    let jwk: serde_json::Value = serde_json::from_str(&jwk_json).map_err(|e| {
+        tracing::error!("Failed to parse JWK: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "error": "Server configuration error" })),
+        )
+    })?;
+
+    let decoding_key = DecodingKey::from_ec_components(
+        jwk["x"].as_str().unwrap_or(""),
+        jwk["y"].as_str().unwrap_or(""),
     )
     .map_err(|e| {
+        tracing::error!("Failed to create decoding key from JWK components: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "error": "Server configuration error" })),
+        )
+    })?;
+
+    let token_data = decode::<Claims>(token, &decoding_key, &validation).map_err(|e| {
         tracing::warn!("JWT validation failed: {}", e);
         (
             StatusCode::UNAUTHORIZED,

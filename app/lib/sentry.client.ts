@@ -1,6 +1,12 @@
 import * as Sentry from "@sentry/react";
 
+let sentryInitialized = false;
+
 export function initSentry() {
+  if (sentryInitialized) {
+    return;
+  }
+
   const dsn = import.meta.env.VITE_SENTRY_DSN;
   const environment =
     import.meta.env.VITE_SENTRY_ENVIRONMENT || import.meta.env.MODE;
@@ -64,4 +70,6 @@ export function initSentry() {
       return event;
     },
   });
+
+  sentryInitialized = true;
 }
