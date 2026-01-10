@@ -9,6 +9,8 @@ use serde_json::{Value, json};
 use std::env;
 use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 #[tokio::main]
 async fn main() {
@@ -16,9 +18,13 @@ async fn main() {
 
     let _guard = init_sentry();
 
+    let sentry_layer = sentry_tracing::layer();
+
     tracing_subscriber::fmt()
         .with_target(false)
         .compact()
+        .finish()
+        .with(sentry_layer)
         .init();
 
     // Configure CORS based on environment
@@ -89,7 +95,7 @@ fn init_sentry() -> sentry::ClientInitGuard {
     let environment = env::var("SENTRY_ENVIRONMENT").unwrap_or_else(|_| "development".to_string());
 
     if dsn.is_none() {
-        tracing::warn!("Sentry DSN not configured. Error tracking disabled.");
+        eprintln!("Sentry DSN not configured. Error tracking disabled.");
     }
 
     sentry::init((
